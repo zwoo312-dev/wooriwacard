@@ -327,16 +327,22 @@ render([], "");
 const SITE_PASSWORD = "wooriwa";
 const pwInput = document.getElementById('pw');
 const pwErr = document.getElementById('pwErr');
+function tryUnlock(){
+  if(pwInput.value.trim() === SITE_PASSWORD){
+    document.body.classList.remove('locked');
+    document.getElementById('gate').remove();
+    input.focus();
+  } else {
+    pwErr.textContent = "비밀번호가 올바르지 않습니다.";
+    pwInput.value = "";
+    pwInput.focus();
+  }
+}
+document.getElementById('pwBtn').addEventListener('click', tryUnlock);
 pwInput.addEventListener('keydown', (e) => {
   if(e.key === 'Enter'){
-    if(pwInput.value === SITE_PASSWORD){
-      document.body.classList.remove('locked');
-      document.getElementById('gate').remove();
-      input.focus();
-    } else {
-      pwErr.textContent = "비밀번호가 올바르지 않습니다.";
-      pwInput.value = "";
-    }
+    e.preventDefault();
+    tryUnlock();
   }
 });
 </script>
