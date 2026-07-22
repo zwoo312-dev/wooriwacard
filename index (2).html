@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>법인카드 계정과목 검색</title>
+<style>
+  :root{
+    --ink:#1c2128;
+    --paper:#f6f4ee;
+    --panel:#ffffff;
+    --line:#dfd9c9;
+    --accent:#2f5d50;
+    --accent-soft:#e4ede9;
+    --warn:#a3402a;
+    --warn-soft:#f5e6df;
+    --muted:#6b6459;
+    --mono: 'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',-apple-system,sans-serif;
+    min-height:100vh;
+    padding:40px 20px 80px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  header{margin-bottom:28px;}
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:10px;
+  }
+  h1{
+    font-size:28px;
+    line-height:1.3;
+    margin:0 0 8px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .sub{
+    color:var(--muted);
+    font-size:14px;
+    line-height:1.6;
+  }
+
+  .search-box{
+    position:relative;
+    margin:28px 0 6px;
+  }
+  .search-box input{
+    width:100%;
+    font-size:17px;
+    padding:16px 18px;
+    border:1.5px solid var(--ink);
+    border-radius:10px;
+    background:var(--panel);
+    outline:none;
+    font-family:inherit;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .search-box input:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft);
+  }
+  .hint{
+    font-size:12.5px;
+    color:var(--muted);
+    margin-bottom:18px;
+  }
+
+  #results{display:flex;flex-direction:column;gap:12px;}
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:18px 20px;
+    animation:rise .18s ease;
+  }
+  @keyframes rise{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  .card .matched{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:10px;
+  }
+  .card .matched b{color:var(--accent);font-weight:600;}
+
+  .row{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  .account{
+    font-family:var(--mono);
+    font-size:19px;
+    font-weight:600;
+    color:var(--ink);
+    letter-spacing:-0.01em;
+  }
+  .tax{
+    font-family:var(--mono);
+    font-size:12.5px;
+    font-weight:600;
+    padding:3px 9px;
+    border-radius:5px;
+    white-space:nowrap;
+  }
+  .tax.deduct{background:var(--accent-soft);color:var(--accent);}
+  .tax.nondeduct{background:#efe7d3;color:#8a6c1f;}
+  .tax.blocked{background:var(--warn-soft);color:var(--warn);}
+
+  .note{
+    font-size:13.5px;
+    line-height:1.7;
+    color:#494540;
+    white-space:pre-line;
+    border-top:1px dashed var(--line);
+    padding-top:10px;
+    margin-top:2px;
+  }
+  .note:empty{display:none;}
+
+  .team-tag{
+    display:inline-block;
+    margin-top:10px;
+    font-family:var(--mono);
+    font-size:11.5px;
+    background:#eee2f0;
+    color:#6b3d75;
+    padding:3px 9px;
+    border-radius:5px;
+  }
+
+  .empty-state, .no-match{
+    text-align:center;
+    padding:36px 20px;
+    color:var(--muted);
+    font-size:14px;
+    border:1px dashed var(--line);
+    border-radius:10px;
+    background:var(--panel);
+  }
+  .no-match{
+    border-color:var(--warn);
+    background:var(--warn-soft);
+    color:var(--warn);
+  }
+  .no-match b{display:block;font-size:15px;margin-bottom:6px;color:var(--warn);}
+
+  footer{
+    margin-top:40px;
+    font-size:12px;
+    color:var(--muted);
+    text-align:center;
+  }
+
+  ::selection{background:var(--accent-soft);}
+
+  #gate{
+    position:fixed;inset:0;
+    background:var(--paper);
+    display:flex;align-items:center;justify-content:center;
+    z-index:100;
+    padding:20px;
+  }
+  #gate .box{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:32px 28px;
+    width:100%;
+    max-width:320px;
+    text-align:center;
+  }
+  #gate .box .eyebrow{margin-bottom:14px;}
+  #gate input{
+    width:100%;
+    font-size:16px;
+    padding:12px 14px;
+    border:1.5px solid var(--ink);
+    border-radius:8px;
+    outline:none;
+    font-family:inherit;
+    text-align:center;
+    margin-top:6px;
+  }
+  #gate input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  #gate .err{
+    color:var(--warn);
+    font-size:13px;
+    margin-top:10px;
+    min-height:18px;
+  }
+  body.locked{overflow:hidden;}
+  body.locked .wrap{display:none;}
+</style>
+</head>
+<body class="locked">
+<div id="gate">
+  <div class="box">
+    <div class="eyebrow">접근 제한</div>
+    <div style="font-size:15px;margin-bottom:4px;">비밀번호를 입력해주세요</div>
+    <input type="password" id="pw" autofocus placeholder="password">
+    <div class="err" id="pwErr"></div>
+  </div>
+</div>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">지출결의서 작성 가이드</div>
+    <h1>법인카드 계정과목 검색</h1>
+    <div class="sub">키워드를 입력하면 세부계정 · 부가세 처리 · 유의사항을 바로 확인할 수 있습니다.</div>
+  </header>
+
+  <div class="search-box">
+    <input type="text" id="q" placeholder="예: 접대, 회식, 택시, 든든한데이 ..." autofocus>
+  </div>
+  <div class="hint">한 글자만 입력해도 관련 항목을 찾아드립니다.</div>
+
+  <div id="results"></div>
+
+  <footer>목록에 없는 항목은 재경팀으로 문의해주세요.</footer>
+</div>
+
+<script>
+const DATA = [
+  {kw:["접대","거래처접대","거래처선물","골프"], account:"접대비_일반", tax:"불공제", note:"접대비 관리항목 꼼꼼하게 기재 요청드립니다.\n팀장 월 50만원(공급가액 기준), 팀원 월 20만원(공급가액 기준) 한도 내 사용 가능합니다.\n접대비 한도금액 초과 사용 시 증액 기안 품의 요청드립니다."},
+  {kw:["야근 식대","야근식대"], account:"복리후생비_일반_식대", tax:"공제", note:"8~17시 근무자는 17시 이후, 9~18시 근무자는 18시 이후 결제 가능합니다."},
+  {kw:["외근 식대","외근식대"], account:"정산 불가", tax:"정산 불가", note:"식권대장 및 식대카드로 기지급하여 중복 지원 불가합니다."},
+  {kw:["출장 식대","출장식대"], account:"여비교통비_국내_식대", tax:"공제", note:"1식당 1만원(공급가액 기준) 한도 내 실비 정산합니다."},
+  {kw:["택시","기차","버스","비행기","항공권","출장 교통비","외근 교통비"], account:"여비교통비_국내_교통비", tax:"불공제", note:"거주지↔교통수단 & 거주지↔출장지 이동은 출퇴근으로 간주하여 정산 불가합니다."},
+  {kw:["야근 교통비","야근택시","야근 택시"], account:"여비교통비_국내_교통비", tax:"불공제", note:"하차 시간(결제 시간) 기준 23시 이후 정산 가능합니다.\n회식 후 택시비 정산 불가합니다."},
+  {kw:["국내 숙박","국내출장 숙박","호텔","숙박"], account:"여비교통비_국내_숙박", tax:"공제", note:"1박당 7만원(공급가액 기준) 한도 내에서 실비 정산합니다.\n성수기 등으로 한도 내 이용이 어려운 경우 사전 별도 협의 필요합니다."},
+  {kw:["주유","유류"], account:"차량유지비_유류대", tax:"불공제", note:"법인차량 이용 시 정산 가능합니다.\n자차이용 시 차량운행일지 작성하여 별도 계산 후 지급합니다."},
+  {kw:["통행료","통행","하이패스"], account:"차량유지비_통행료", tax:"불공제", note:"법인차량 이용 시 정산 가능합니다.\n자차이용 시 차량운행일지 작성하여 별도 계산 후 지급합니다."},
+  {kw:["주차","주차료"], account:"차량유지비_주차료", tax:"불공제", note:"법인차량 이용 시 정산 가능합니다.\n자차이용 시 차량운행일지 작성하여 별도 계산 후 지급합니다."},
+  {kw:["기차 취소 수수료","버스 취소 수수료","승차권 취소 수수료","취소 수수료"], account:"여비교통비_국내_기타", tax:"공제", note:""},
+  {kw:["해외 출장 비행기","해외 출장 항공권","해외출장 비행기","해외출장 항공권"], account:"여비교통비_해외_항공료", tax:"불공제", note:""},
+  {kw:["해외 출장 숙박","해외 출장 호텔","해외 숙박","해외출장 숙박"], account:"여비교통비_해외_숙박", tax:"불공제", note:"4성급 호텔 일반실 기준 내 실비 정산합니다."},
+  {kw:["우버","uber","그랩","grab","해외 택시","해외택시"], account:"여비교통비_해외_교통비", tax:"불공제", note:"공항 주차료, 출퇴근성 이동은 정산 불가합니다."},
+  {kw:["해외 출장 식대","해외 출장 식비","해외출장 식대"], account:"여비교통비_해외_식대", tax:"불공제", note:"한도 내 실비 정산합니다. (US $20/식 한도)\n영수증 내 봉사료와 식대가 구분되지 않아 나눌 수 없는 경우 봉사료도 한도에 포함됩니다.\n숙소 조식 제공, 거래처 접대 등 식대 사유가 중복될 경우 예산 미편성됩니다."},
+  {kw:["비자"], account:"여비교통비_해외_비자", tax:"불공제", note:""},
+  {kw:["항공권 발급 수수료","항공 수수료","여행자보험","예방접종","예방주사"], account:"여비교통비_해외_기타", tax:"불공제", note:""},
+  {kw:["로밍","유심","와이파이","봉사료"], account:"정산 불가", tax:"정산 불가", note:"현금성 지출 경비로 정해진 규정에 따른 일비 전달합니다. 법인카드로 결제 불가합니다."},
+  {kw:["회의","업무 회의","회의실","대관"], account:"회의비", tax:"공제", note:"지출결의서 내 회의록 첨부 요청드립니다.\n대외비성 자료로 첨부 불가하다면 기안자 의견 내 사유 기재 요청드립니다."},
+  {kw:["워셔액","엔진오일","타이어"], account:"차량유지비_차량수선", tax:"불공제", note:"법인차량 수리 발생 시 인사총무팀에 공유 요청드립니다."},
+  {kw:["대리운전","세차"], account:"차량유지비_기타", tax:"불공제", note:"법인차량 대리운전 이용 시 팀장에게 사전 보고 필수이며, 사전보고 증빙(카톡 캡쳐 등) 지출결의서에 첨부 요청드립니다."},
+  {kw:["회식"], account:"복리후생비_일반_회식비", tax:"공제", note:"참석자 중 최상급자 명의의 법인카드로 결제 요청드립니다.\n회식비 예산 초과 사용 시 본부장 전결로 사전 기안 품의 요청드립니다.\n21시 이후 회식비 결제 제한되며, 부득이한 경우 사전 공유 요청드립니다."},
+  {kw:["우체국","우편","등기"], account:"통신비_우편", tax:"불공제", note:"일반 우편, 등기우편, 우체국 택배"},
+  {kw:["편의점 택배","택배"], account:"물류비_기타_택배비", tax:"공제", note:"편의점 택배 (우체국 택배 X)"},
+  {kw:["퀵서비스","퀵"], account:"물류비_기타_퀵서비스", tax:"공제", note:""},
+  {kw:["든든한데이","든든 데이","든든"], account:"복리후생비_일반_행사비", tax:"공제", note:"", team:"무조건 (관리) / 코스트센터: 인사총무팀"},
+  {kw:["ai","챗지피티","gpt","클로드","제미나이"], account:"지급수수료_전산수수료", tax:"불공제", note:"사용 기안 품의 요청드립니다."},
+  {kw:["유니폼","세탁"], account:"복리후생비_일반_피복대", tax:"공제", note:"사용 기안 품의 요청드립니다."},
+  {kw:["도서","논문","책"], account:"도서인쇄비_도서구입", tax:"불공제", note:"사용 기안 품의 요청드립니다."},
+  {kw:["인쇄","출력"], account:"도서인쇄비_인쇄인화", tax:"불공제", note:"사용 기안 품의 요청드립니다."},
+  {kw:["박람회","전시"], account:"지급수수료_기타", tax:"불공제", note:"사용 기안 품의 요청드립니다."},
+  {kw:["등기부등본","등본","증명","발급"], account:"지급수수료_증명발급수수료", tax:"공제", note:""}
+];
+
+function taxClass(tax){
+  if(tax === "정산 불가") return "blocked";
+  if(tax === "공제") return "deduct";
+  return "nondeduct";
+}
+
+function render(items, query){
+  const box = document.getElementById('results');
+  box.innerHTML = "";
+
+  if(query.trim() === ""){
+    box.innerHTML = `<div class="empty-state">계정과목 키워드를 입력해보세요.</div>`;
+    return;
+  }
+
+  if(items.length === 0){
+    box.innerHTML = `<div class="no-match"><b>해당 항목이 없습니다</b>목록에 없는 지출건은 재경팀에 문의해주세요.</div>`;
+    return;
+  }
+
+  items.forEach(({item, matchedKw}) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="matched">매칭 키워드: <b>${matchedKw}</b></div>
+      <div class="row">
+        <span class="account">${item.account}</span>
+        <span class="tax ${taxClass(item.tax)}">${item.tax}</span>
+      </div>
+      ${item.team ? `<div class="team-tag">${item.team}</div>` : ''}
+      <div class="note">${item.note ? item.note.replace(/\n/g,'<br>') : ''}</div>
+    `;
+    box.appendChild(card);
+  });
+}
+
+function search(query){
+  const q = query.trim().toLowerCase();
+  if(q === "") return [];
+  const results = [];
+  DATA.forEach(item => {
+    for(const kw of item.kw){
+      if(kw.toLowerCase().includes(q) || q.includes(kw.toLowerCase())){
+        results.push({item, matchedKw: kw});
+        return;
+      }
+    }
+  });
+  return results;
+}
+
+const input = document.getElementById('q');
+input.addEventListener('input', () => render(search(input.value), input.value));
+render([], "");
+
+const SITE_PASSWORD = "wooriwa";
+const pwInput = document.getElementById('pw');
+const pwErr = document.getElementById('pwErr');
+pwInput.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter'){
+    if(pwInput.value === SITE_PASSWORD){
+      document.body.classList.remove('locked');
+      document.getElementById('gate').remove();
+      input.focus();
+    } else {
+      pwErr.textContent = "비밀번호가 올바르지 않습니다.";
+      pwInput.value = "";
+    }
+  }
+});
+</script>
+</body>
+</html>
