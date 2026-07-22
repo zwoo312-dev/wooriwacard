@@ -318,6 +318,9 @@ function search(query){
         return;
       }
     }
+    if(item.account.toLowerCase().includes(q)){
+      results.push({item, matchedKw: item.account});
+    }
   });
   return results;
 }
