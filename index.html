@@ -3,32 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
 <title>법인카드 계정과목 </title>
 <style>
   :root{
-    --ink:#1c2128;
-    --paper:#f6f4ee;
+    --ink:#0d2c54;
+    --paper:#f4f8fb;
     --panel:#ffffff;
-    --line:#dfd9c9;
-    --accent:#2f5d50;
-    --accent-soft:#e4ede9;
+    --line:#cfe0ee;
+    --accent:#0d2c54;
+    --accent-soft:#dceefa;
     --warn:#a3402a;
     --warn-soft:#f5e6df;
-    --muted:#6b6459;
-    --mono: 'JetBrains Mono','SFMono-Regular',Consolas,monospace;
+    --muted:#5b7a9a;
+    --sky:#6fb6e0;
+    --mono: 'Nanum Gothic','Pretendard',sans-serif;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
     background:var(--paper);
     color:var(--ink);
-    font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',-apple-system,sans-serif;
+    font-family:'Nanum Gothic','Apple SD Gothic Neo','Malgun Gothic',-apple-system,sans-serif;
     min-height:100vh;
     padding:40px 20px 80px;
   }
   .wrap{max-width:760px;margin:0 auto;}
 
   header{margin-bottom:28px;}
+  .stripe{height:10px;border-radius:3px;overflow:hidden;display:flex;flex-direction:column;margin:14px 0 0;}
+  .stripe span{display:block;height:5px;}
+  .stripe span:first-child{background:var(--sky);}
+  .stripe span:last-child{background:var(--ink);}
   .eyebrow{
     font-family:var(--mono);
     font-size:12px;
@@ -48,6 +56,54 @@
     color:var(--muted);
     font-size:14px;
     line-height:1.6;
+  }
+
+  .guide{
+    margin:22px 0 28px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:var(--panel);
+    overflow:hidden;
+  }
+  .guide summary{
+    cursor:pointer;
+    list-style:none;
+    padding:14px 18px;
+    font-size:14px;
+    font-weight:600;
+    color:var(--accent);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .guide summary::-webkit-details-marker{display:none;}
+  .guide summary::after{
+    content:"▾";
+    transition:transform .15s;
+  }
+  .guide[open] summary::after{transform:rotate(180deg);}
+  .guide-body{
+    padding:0 18px 18px;
+    border-top:1px solid var(--line);
+  }
+  .guide-row{
+    padding:14px 0;
+    border-bottom:1px dashed var(--line);
+  }
+  .guide-row:last-child{border-bottom:none;}
+  .guide-row .g-label{
+    font-family:var(--mono);
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
+    margin-bottom:6px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+  }
+  .guide-row .g-content{
+    font-size:13.5px;
+    line-height:1.7;
+    white-space:pre-line;
   }
 
   .search-box{
@@ -221,7 +277,35 @@
     <div class="eyebrow">지출결의서 작성 가이드</div>
     <h1>법인카드 계정과목 </h1>
     <div class="sub">✅키워드를 입력하면 세부계정 · 부가세 처리 · 유의사항을 바로 확인할 수 있습니다.</div>
+    <div class="stripe"><span></span><span></span></div>
   </header>
+
+  <details class="guide">
+    <summary>📋 지출결의서 작성 가이드</summary>
+    <div class="guide-body">
+      <div class="guide-row">
+        <div class="g-label">결재선</div>
+        <div class="g-content">· 공급가액 30만원 미만: 팀장 전결
+· 공급가액 30만원 이상 100만원 미만: 본부장 전결
+· 공급가액 100만원 이상: 대표이사 전결
+· 주유/하이패스: 본부장 전결
+※ 사후감사 설정 필수</div>
+      </div>
+      <div class="guide-row">
+        <div class="g-label">회계일자(전표일)</div>
+        <div class="g-content">매월 말일(휴일 관계없이)</div>
+      </div>
+      <div class="guide-row">
+        <div class="g-label">자금예정일자(지급요청일)</div>
+        <div class="g-content">개인형: 익월 22일(휴일 관계없이)
+공용/주유/하이패스: 익월 23일(휴일 관계없이)</div>
+      </div>
+      <div class="guide-row">
+        <div class="g-label">작성 기한</div>
+        <div class="g-content">영업일 기준 D+2일 16시 내</div>
+      </div>
+    </div>
+  </details>
 
   <div class="search-box">
     <input type="text" id="q" placeholder="예: 회식, 야근, 출장 등등 ..." autofocus>
